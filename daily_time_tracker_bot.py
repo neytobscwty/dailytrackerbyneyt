@@ -3,6 +3,10 @@ import sqlite3
 from datetime import datetime, timedelta, date
 import calendar
 import os
+import threading
+import http.server
+import socketserver
+
 
 from telegram import (
     Update,
@@ -544,6 +548,19 @@ def main():
 
     app.run_polling()
 
+def run_dummy_http_server():
+    """
+    Фейковый HTTP-сервер, чтобы Render видел открытый порт.
+    Ничего полезного не делает, просто держит порт открытым.
+    """
+    port = int(os.getenv("PORT", "10000"))
+    handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", port), handler) as httpd:
+        httpd.serve_forever()
 
 if __name__ == "__main__":
+    # Запускаем фейковый HTTP-сервер в отдельном потоке
+    threading.Thread(target=run_dummy_http_server, daemon=True).start()
+
+    # Запускаем телеграм-бота
     main()
